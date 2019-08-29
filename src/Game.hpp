@@ -17,6 +17,7 @@ namespace lf
 		void update(double dt);
 
 		sf::RenderWindow m_window;
+		std::vector<sf::Vertex> m_vertices;
 		sf::CircleShape m_shape;
 	};
 }
