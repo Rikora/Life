@@ -5,13 +5,17 @@
 
 namespace lf
 {
+	using uint = unsigned int;
+
 	struct Cell
 	{
-		Cell() : alive(true) {}
-		Cell(const sf::Vector2f& pos) : pos(pos), alive(true) {}
+		Cell() : alive(false), neighbors(8) {}
+		Cell(const sf::Vector2f& pos) : pos(pos), alive(true), neighbors(8) {}
 
-		sf::Vector2f pos; // Random pos on spawn? How can they move if they are static?
+		sf::Vector2f pos;
 		bool alive;
+		uint aliveNeighbors;
+		std::vector<Cell> neighbors; // Should be array with 8 elements...
 	};
 
 	class Game
@@ -25,6 +29,7 @@ namespace lf
 		void render();
 		void pollEvents();
 		void update(double dt);
+		void generateNeighbors();
 
 		sf::RenderWindow m_window;
 		std::vector<sf::Vertex> m_vertices;

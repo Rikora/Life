@@ -43,30 +43,57 @@ namespace lf
 
 	void Game::update(double dt)
 	{
+		// How can new cells be created?
 		for (auto& cell : m_cells)
 		{
-			// Check neighbors of the cells, or should these be generated before? Can neighbor be an attribute?
-			for (const auto& direction : m_directions)
+			for (size_t i = 0; i < m_directions.size(); ++i)
 			{
-				if (cell.alive)
-				{
-
-				}
-				else
-				{
-
-				}
-
-				//auto neighborPos = cell.pos + direction;
+				// TODO: generate neighbors of the current cell
 			}
 
+			// Check status of neighbors
+			for (const auto& neighbor : cell.neighbors)
+			{
+				(neighbor.alive) ? cell.aliveNeighbors++ : cell.aliveNeighbors--;
+			}
+
+			if (cell.alive)
+			{
+				if (cell.aliveNeighbors < 2)
+				{
+					cell.alive = false;
+				}
+				else if (cell.aliveNeighbors >= 2 && cell.aliveNeighbors <= 3)
+				{
+					// Lives on to the next generation
+					continue;
+				}
+				else if (cell.aliveNeighbors > 3)
+				{
+					cell.alive = false;
+				}
+			}
+			else
+			{
+				if (cell.aliveNeighbors == 3)
+				{
+					cell.alive = true;
+				}
+			}
 		}
+	}
+
+	void Game::generateNeighbors()
+	{
+
+
 	}
 
 	void Game::render()
 	{
 		m_window.clear();
 
+		// TODO: don't draw dead cells, alive = false, but don't erase them!
 		m_window.draw(m_vertices.data(), m_vertices.size(), sf::Points);
 		
 		m_window.display();		
