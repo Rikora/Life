@@ -1,7 +1,6 @@
 #pragma once
 
 #include <SFML/Graphics.hpp>
-#include <array>
 
 namespace lf
 {
@@ -9,13 +8,12 @@ namespace lf
 
 	struct Cell
 	{
-		Cell() : alive(false), neighbors(8) {}
-		Cell(const sf::Vector2f& pos) : pos(pos), alive(true), neighbors(8) {}
+		Cell() = default;
+		Cell(const sf::Vector2f& pos) : pos(pos), isAlive(false) {}
 
+		sf::RectangleShape body;
 		sf::Vector2f pos;
-		bool alive;
-		uint aliveNeighbors;
-		std::vector<Cell> neighbors; // Should be array with 8 elements...
+		bool isAlive;
 	};
 
 	class Game
@@ -29,11 +27,11 @@ namespace lf
 		void render();
 		void pollEvents();
 		void update(double dt);
-		void generateNeighbors();
+		uint getLivingNeighbors(const sf::Vector2u& index);
 
 		sf::RenderWindow m_window;
 		std::vector<sf::Vertex> m_vertices;
-		std::vector<Cell> m_cells;
-		std::array<sf::Vector2f, 8> m_directions;
+		std::vector<std::vector<Cell>> m_cells; // Could be 1D as well for better performance
+		//sf::Vector2f m_dimensions;
 	};
 }
