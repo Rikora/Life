@@ -3,6 +3,7 @@
 #define WIDTH 600
 #define HEIGHT 480
 #define CELLS 30
+#define CELL_SIZE 10.f
 
 namespace lf
 {
@@ -13,11 +14,8 @@ namespace lf
 	{
 		m_window.setVerticalSyncEnabled(true);
 
-		// Init vertices 
-		m_vertices.push_back(sf::Vertex(sf::Vector2f(10.f, 10.f), sf::Color::Red));
-		m_vertices.push_back(sf::Vertex(sf::Vector2f(40.f, 30.f), sf::Color::Blue));
-		m_vertices.push_back(sf::Vertex(sf::Vector2f(70.f, 20.f), sf::Color::Green));
-		m_vertices.push_back(sf::Vertex(sf::Vector2f(50.f, 5.f), sf::Color::Yellow));
+		// Init grid
+		createGrid(m_window.getView().getCenter());
 
 		// Init directions of neighbors
 		m_directions = { sf::Vector2i(-1, 0), sf::Vector2i(1, 0), sf::Vector2i(0, 1), sf::Vector2i(0, -1),
@@ -49,7 +47,27 @@ namespace lf
 
 		while (m_window.pollEvent(event))
 		{
-			// TODO: check if mouse is down and if the mouse intersects a cell -> alive/dead
+			if (event.type == sf::Event::MouseButtonPressed && event.key.code == sf::Mouse::Left)
+			{
+				Cell* cell = nullptr;
+
+				// Set the intersected cell to alive
+				if (isClicked(static_cast<sf::Vector2f>(sf::Mouse::getPosition(m_window)), cell))
+				{
+					cell->alive = true;
+				}
+			}
+
+			if (event.type == sf::Event::MouseButtonPressed && event.key.code == sf::Mouse::Right)
+			{
+				Cell* cell = nullptr;
+
+				// Set the intersected cell to dead
+				if (isClicked(static_cast<sf::Vector2f>(sf::Mouse::getPosition(m_window)), cell))
+				{
+					cell->alive = false;
+				}
+			}
 
 			if (event.type == sf::Event::Closed || (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape))
 			{
@@ -96,8 +114,21 @@ namespace lf
 		setNextState();
 	}
 
+
+	void Game::render()
+	{
+		m_window.clear(sf::Color::Black);
+
+		// TODO: Draw cells
+		m_window.draw(m_verticalLines.data(), m_verticalLines.size(), sf::Lines);
+		m_window.draw(m_horizontalLines.data(), m_horizontalLines.size(), sf::Lines);
+
+		m_window.display();
+	}
+
 	void Game::setNextState()
 	{
+		// Update the state of the cells
 		for (int i = 0; i < CELLS; ++i)
 		{
 			for (int j = 0; j < CELLS; ++j)
@@ -124,20 +155,77 @@ namespace lf
 		return count;
 	}
 
-	// Note: This may not be correct
 	bool Game::isValid(const sf::Vector2i& index)
 	{
-		return (index.x >= 0) && (index.x < WIDTH - 1) && 
-			   (index.y >= 0) && (index.y < HEIGHT - 1);
+		return (index.x > 0) && (index.x < WIDTH - 1) && 
+			   (index.y > 0) && (index.y < HEIGHT - 1);
 	}
 
-	void Game::render()
+	bool Game::isClicked(const sf::Vector2f& pos, Cell* cell)
 	{
-		m_window.clear();
+		for (int i = 0; i < CELLS; ++i)
+		{
+			for (int j = 0; j < CELLS; ++j)
+			{
+				if (m_cells[i][j].body.getGlobalBounds().contains(pos))
+				{
+					cell = &m_cells[i][j];
+					return true;
+				}
+			}
+		}
 
-		// TODO: Draw cells
-		m_window.draw(m_vertices.data(), m_vertices.size(), sf::Points);
-		
-		m_window.display();		
+		return false;
+	}
+
+	void Game::createGrid(const sf::Vector2f& viewCenter)
+	{
+		// Vertical grid lines
+		const int multiple = 2;
+		const auto grayColor = sf::Color(75, 75, 75);
+		auto size = static_cast<uint>(std::round(HEIGHT / CELL_SIZE) * multiple);
+		auto remainder = size % multiple;
+
+		// Make sure the grid expands the whole window
+		if (remainder != 0)
+		{
+			m_verticalLines.resize(size + (multiple * multiple) - remainder);
+		}
+		else
+		{
+			m_verticalLines.resize(size + multiple);
+		}
+
+		float tileSize = 0.f;
+		for (uint i = 0; i < m_verticalLines.size(); i += 2, tileSize += CELL_SIZE)
+		{
+			m_verticalLines[i] = sf::Vertex(sf::Vector2f(-viewCenter.x, static_cast<float>(-viewCenter.y + HEIGHT - tileSize)),
+				grayColor);
+			m_verticalLines[i + 1] = sf::Vertex(sf::Vector2f(static_cast<float>(WIDTH) - viewCenter.x, static_cast<float>(-viewCenter.y + HEIGHT - tileSize)),
+				grayColor);
+		}
+
+		// Horizontal grid lines
+		tileSize = 0.f;
+		size = static_cast<unsigned>(std::round(WIDTH / CELL_SIZE)) * multiple;
+		remainder = size % multiple;
+
+		// Make sure the grid expands the whole scene window
+		if (remainder != 0)
+		{
+			m_horizontalLines.resize(size + (multiple * multiple) - remainder);
+		}
+		else
+		{
+			m_horizontalLines.resize(size + multiple);
+		}
+
+		for (unsigned i = 0; i < m_horizontalLines.size(); i += 2, tileSize += CELL_SIZE)
+		{
+			m_horizontalLines[i] = sf::Vertex(sf::Vector2f(tileSize - viewCenter.x, static_cast<float>(-viewCenter.y + HEIGHT)),
+				grayColor);
+			m_horizontalLines[i + 1] = sf::Vertex(sf::Vector2f(tileSize - viewCenter.x, -viewCenter.y),
+				grayColor);
+		}
 	}
 }
