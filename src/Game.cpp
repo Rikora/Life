@@ -8,14 +8,14 @@
 namespace lf
 {
 	Game::Game() : 
-	m_window(sf::VideoMode(static_cast<uint>(WIDTH), static_cast<uint>(HEIGHT)), "Game of Life"),
+	m_window(sf::VideoMode(static_cast<uint>(WIDTH), static_cast<uint>(HEIGHT)), "Game of Life", sf::Style::Close),
 	m_cells(CELLS, std::vector<Cell>(CELLS)),
 	m_nextCellStates(CELLS, std::vector<bool>(CELLS, false))
 	{
 		m_window.setVerticalSyncEnabled(true);
 
 		// Init grid
-		createGrid(m_window.getView().getCenter());
+		createGrid();
 
 		// Init directions of neighbors
 		m_directions = { sf::Vector2i(-1, 0), sf::Vector2i(1, 0), sf::Vector2i(0, 1), sf::Vector2i(0, -1),
@@ -117,9 +117,11 @@ namespace lf
 
 	void Game::render()
 	{
-		m_window.clear(sf::Color::Black);
+		m_window.clear(sf::Color::White);
 
 		// TODO: Draw cells
+
+		// Draw grid
 		m_window.draw(m_verticalLines.data(), m_verticalLines.size(), sf::Lines);
 		m_window.draw(m_horizontalLines.data(), m_horizontalLines.size(), sf::Lines);
 
@@ -138,13 +140,13 @@ namespace lf
 		}
 	}
 
-	uint Game::getLivingNeighbors(const sf::Vector2i& index)
+	uint Game::getLivingNeighbors(const sf::Vector2i& index) const
 	{
 		uint count = 0;
 
 		for (const auto& direction : m_directions)
 		{
-			auto neighborIndex = index + direction;
+			const auto neighborIndex = index + direction;
 
 			if (isValid(neighborIndex) && m_cells[neighborIndex.x][neighborIndex.y].alive)
 			{
@@ -155,7 +157,7 @@ namespace lf
 		return count;
 	}
 
-	bool Game::isValid(const sf::Vector2i& index)
+	bool Game::isValid(const sf::Vector2i& index) const
 	{
 		return (index.x > 0) && (index.x < WIDTH - 1) && 
 			   (index.y > 0) && (index.y < HEIGHT - 1);
@@ -178,7 +180,7 @@ namespace lf
 		return false;
 	}
 
-	void Game::createGrid(const sf::Vector2f& viewCenter)
+	void Game::createGrid()
 	{
 		// Vertical grid lines
 		const int multiple = 2;
@@ -187,45 +189,27 @@ namespace lf
 		auto remainder = size % multiple;
 
 		// Make sure the grid expands the whole window
-		if (remainder != 0)
-		{
-			m_verticalLines.resize(size + (multiple * multiple) - remainder);
-		}
-		else
-		{
-			m_verticalLines.resize(size + multiple);
-		}
+		(remainder != 0) ? m_verticalLines.resize(size + (multiple * multiple) - remainder) : m_verticalLines.resize(size + multiple);
 
 		float tileSize = 0.f;
 		for (uint i = 0; i < m_verticalLines.size(); i += 2, tileSize += CELL_SIZE)
 		{
-			m_verticalLines[i] = sf::Vertex(sf::Vector2f(-viewCenter.x, static_cast<float>(-viewCenter.y + HEIGHT - tileSize)),
-				grayColor);
-			m_verticalLines[i + 1] = sf::Vertex(sf::Vector2f(static_cast<float>(WIDTH) - viewCenter.x, static_cast<float>(-viewCenter.y + HEIGHT - tileSize)),
-				grayColor);
+			m_verticalLines[i] = sf::Vertex(sf::Vector2f(0.f, static_cast<float>(HEIGHT - tileSize)), grayColor);
+			m_verticalLines[i + 1] = sf::Vertex(sf::Vector2f(static_cast<float>(WIDTH), static_cast<float>(HEIGHT - tileSize)), grayColor);
 		}
 
 		// Horizontal grid lines
 		tileSize = 0.f;
-		size = static_cast<unsigned>(std::round(WIDTH / CELL_SIZE)) * multiple;
+		size = static_cast<uint>(std::round(WIDTH / CELL_SIZE)) * multiple;
 		remainder = size % multiple;
 
 		// Make sure the grid expands the whole scene window
-		if (remainder != 0)
-		{
-			m_horizontalLines.resize(size + (multiple * multiple) - remainder);
-		}
-		else
-		{
-			m_horizontalLines.resize(size + multiple);
-		}
+		(remainder != 0) ? m_horizontalLines.resize(size + (multiple * multiple) - remainder) : m_horizontalLines.resize(size + multiple);
 
-		for (unsigned i = 0; i < m_horizontalLines.size(); i += 2, tileSize += CELL_SIZE)
+		for (uint i = 0; i < m_horizontalLines.size(); i += 2, tileSize += CELL_SIZE)
 		{
-			m_horizontalLines[i] = sf::Vertex(sf::Vector2f(tileSize - viewCenter.x, static_cast<float>(-viewCenter.y + HEIGHT)),
-				grayColor);
-			m_horizontalLines[i + 1] = sf::Vertex(sf::Vector2f(tileSize - viewCenter.x, -viewCenter.y),
-				grayColor);
+			m_horizontalLines[i] = sf::Vertex(sf::Vector2f(tileSize, static_cast<float>(HEIGHT)), grayColor);
+			m_horizontalLines[i + 1] = sf::Vertex(sf::Vector2f(tileSize, 0.f), grayColor);
 		}
 	}
 }

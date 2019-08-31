@@ -25,13 +25,13 @@ namespace lf
 		void run();
 
 	private:
-		void createGrid(const sf::Vector2f& viewCenter);
+		void createGrid();
 		void render();
 		void pollEvents();
 		void update(double dt);
 		void setNextState();
-		uint getLivingNeighbors(const sf::Vector2i& index);
-		bool isValid(const sf::Vector2i& index);
+		uint getLivingNeighbors(const sf::Vector2i& index) const;
+		bool isValid(const sf::Vector2i& index) const;
 		bool isClicked(const sf::Vector2f& pos, Cell* cell);
 		
 		sf::RenderWindow m_window;
