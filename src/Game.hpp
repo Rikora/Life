@@ -3,10 +3,8 @@
 #include <SFML/Graphics.hpp>
 #include <array>
 
-#define WIDTH 600
-#define HEIGHT 480
-#define CELLS_X 50
-#define CELLS_Y 40
+#define CELLS_X 100
+#define CELLS_Y 50
 #define CELL_SIZE 10.f
 
 namespace lf
@@ -38,7 +36,7 @@ namespace lf
 		void render();
 		void pollEvents();
 		void update();
-		void updateCell(const sf::Vector2f& point, bool alive);
+		void updateCell(const sf::Vector2f& point);
 		void setNextState();
 		uint getLivingNeighbors(const sf::Vector2i& index) const;
 		bool isValid(const sf::Vector2i& index) const;
