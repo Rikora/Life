@@ -1,16 +1,11 @@
 #include "Game.hpp"
 
-#define WIDTH 600
-#define HEIGHT 480
-#define CELLS 30
-#define CELL_SIZE 10.f
-
 namespace lf
 {
 	Game::Game() : 
 	m_window(sf::VideoMode(static_cast<uint>(WIDTH), static_cast<uint>(HEIGHT)), "Game of Life", sf::Style::Close),
-	m_cells(CELLS, std::vector<Cell>(CELLS)),
-	m_nextCellStates(CELLS, std::vector<bool>(CELLS, false))
+	m_cells(CELLS_X, std::vector<Cell>(CELLS_Y)),
+	m_nextCellStates(CELLS_X, std::vector<bool>(CELLS_Y, false))
 	{
 		m_window.setVerticalSyncEnabled(true);
 
@@ -22,11 +17,11 @@ namespace lf
 						 sf::Vector2i(-1, -1), sf::Vector2i(1, 1), sf::Vector2i(-1, 1), sf::Vector2i(1, -1) };
 
 		// Init the cells
-		for (int i = 0; i < CELLS; ++i)
+		for (int i = 0; i < CELLS_X; ++i)
 		{
-			for (int j = 0; j < CELLS; ++j)
+			for (int j = 0; j < CELLS_Y; ++j)
 			{
-				m_cells[i][j] = { sf::Vector2f(static_cast<float>(i), static_cast<float>(j)) }; // Note: Is this the correct coordinate system?
+				m_cells[i][j] = Cell(sf::Vector2f(static_cast<float>(i), static_cast<float>(j)));
 			}
 		}
 	}
@@ -36,7 +31,7 @@ namespace lf
 		while (m_window.isOpen())
 		{
 			pollEvents();
-			//update(1.0 / 60.0);
+			//update();
 			render();
 		}
 	}
@@ -49,24 +44,14 @@ namespace lf
 		{
 			if (event.type == sf::Event::MouseButtonPressed && event.key.code == sf::Mouse::Left)
 			{
-				Cell* cell = nullptr;
-
 				// Set the intersected cell to alive
-				if (isClicked(static_cast<sf::Vector2f>(sf::Mouse::getPosition(m_window)), cell))
-				{
-					cell->alive = true;
-				}
+				updateCell(static_cast<sf::Vector2f>(sf::Mouse::getPosition(m_window)), true);	
 			}
 
 			if (event.type == sf::Event::MouseButtonPressed && event.key.code == sf::Mouse::Right)
 			{
-				Cell* cell = nullptr;
-
 				// Set the intersected cell to dead
-				if (isClicked(static_cast<sf::Vector2f>(sf::Mouse::getPosition(m_window)), cell))
-				{
-					cell->alive = false;
-				}
+				updateCell(static_cast<sf::Vector2f>(sf::Mouse::getPosition(m_window)), false);
 			}
 
 			if (event.type == sf::Event::Closed || (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape))
@@ -76,12 +61,12 @@ namespace lf
 		}
 	}
 
-	void Game::update(double dt)
+	void Game::update()
 	{
 		// Check the cells
-		for (int i = 0; i < CELLS; ++i)
+		for (int i = 0; i < CELLS_X; ++i)
 		{
-			for (int j = 0; j < CELLS; ++j)
+			for (int j = 0; j < CELLS_Y; ++j)
 			{
 				auto count = getLivingNeighbors(sf::Vector2i(i, j));
 
@@ -111,7 +96,7 @@ namespace lf
 			}
 		}
 
-		setNextState();
+		setNextState(); // Could be this one...
 	}
 
 
@@ -119,7 +104,17 @@ namespace lf
 	{
 		m_window.clear(sf::Color::White);
 
-		// TODO: Draw cells
+		// Draw cells
+		for (int i = 0; i < CELLS_X; ++i)
+		{
+			for (int j = 0; j < CELLS_Y; ++j)
+			{
+				if (m_cells[i][j].alive)
+				{
+					m_window.draw(m_cells[i][j].body);
+				}
+			}
+		}
 
 		// Draw grid
 		m_window.draw(m_verticalLines.data(), m_verticalLines.size(), sf::Lines);
@@ -131,9 +126,9 @@ namespace lf
 	void Game::setNextState()
 	{
 		// Update the state of the cells
-		for (int i = 0; i < CELLS; ++i)
+		for (int i = 0; i < CELLS_X; ++i)
 		{
-			for (int j = 0; j < CELLS; ++j)
+			for (int j = 0; j < CELLS_Y; ++j)
 			{
 				m_cells[i][j].alive = m_nextCellStates[i][j];
 			}
@@ -144,6 +139,7 @@ namespace lf
 	{
 		uint count = 0;
 
+		// Crash here...
 		for (const auto& direction : m_directions)
 		{
 			const auto neighborIndex = index + direction;
@@ -163,21 +159,18 @@ namespace lf
 			   (index.y > 0) && (index.y < HEIGHT - 1);
 	}
 
-	bool Game::isClicked(const sf::Vector2f& pos, Cell* cell)
+	void Game::updateCell(const sf::Vector2f& point, bool alive)
 	{
-		for (int i = 0; i < CELLS; ++i)
+		for (int i = 0; i < CELLS_X; ++i)
 		{
-			for (int j = 0; j < CELLS; ++j)
+			for (int j = 0; j < CELLS_Y; ++j)
 			{
-				if (m_cells[i][j].body.getGlobalBounds().contains(pos))
+				if (m_cells[i][j].body.getGlobalBounds().contains(point))
 				{
-					cell = &m_cells[i][j];
-					return true;
+					m_cells[i][j].alive = alive;
 				}
 			}
 		}
-
-		return false;
 	}
 
 	void Game::createGrid()

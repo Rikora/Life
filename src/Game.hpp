@@ -3,6 +3,12 @@
 #include <SFML/Graphics.hpp>
 #include <array>
 
+#define WIDTH 600
+#define HEIGHT 480
+#define CELLS_X 50
+#define CELLS_Y 40
+#define CELL_SIZE 10.f
+
 namespace lf
 {
 	using uint = unsigned int;
@@ -10,10 +16,13 @@ namespace lf
 	struct Cell
 	{
 		Cell() = default;
-		Cell(const sf::Vector2f& pos) : pos(pos), alive(false) {}
+		Cell(const sf::Vector2f& pos) : alive(false), body(sf::Vector2f(CELL_SIZE, CELL_SIZE))
+		{
+			body.setPosition(pos * CELL_SIZE);
+			body.setFillColor(sf::Color::Black);
+		}
 
 		sf::RectangleShape body;
-		sf::Vector2f pos;
 		bool alive;
 	};
 
@@ -28,11 +37,11 @@ namespace lf
 		void createGrid();
 		void render();
 		void pollEvents();
-		void update(double dt);
+		void update();
+		void updateCell(const sf::Vector2f& point, bool alive);
 		void setNextState();
 		uint getLivingNeighbors(const sf::Vector2i& index) const;
 		bool isValid(const sf::Vector2i& index) const;
-		bool isClicked(const sf::Vector2f& pos, Cell* cell);
 		
 		sf::RenderWindow m_window;
 		std::array<sf::Vector2i, 8> m_directions;
