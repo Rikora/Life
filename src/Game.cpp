@@ -9,7 +9,7 @@ namespace lf
 	{
 		const auto screenSize = sf::Vector2f(static_cast<float>(CELLS_X), static_cast<float>(CELLS_Y)) * CELL_SIZE;
 
-		m_window.create(sf::VideoMode(static_cast<uint>(screenSize.x), static_cast<uint>(screenSize.y)), "Game of Life", sf::Style::Close),
+		m_window.create(sf::VideoMode(static_cast<uint>(screenSize.x), static_cast<uint>(screenSize.y)), "Game of Life", sf::Style::Close);
 		m_window.setVerticalSyncEnabled(true);
 
 		// Init grid
