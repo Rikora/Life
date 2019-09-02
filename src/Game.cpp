@@ -4,7 +4,8 @@ namespace lf
 {
 	Game::Game() :
 	m_cells(CELLS_X, std::vector<Cell>(CELLS_Y)),
-	m_nextCellStates(CELLS_X, std::vector<bool>(CELLS_Y, false))
+	m_nextCellStates(CELLS_X, std::vector<bool>(CELLS_Y, false)),
+	m_updateTimer(sf::Time::Zero)
 	{
 		const auto screenSize = sf::Vector2f(static_cast<float>(CELLS_X), static_cast<float>(CELLS_Y)) * CELL_SIZE;
 
@@ -30,10 +31,12 @@ namespace lf
 
 	void Game::run()
 	{
+		sf::Clock clock;
+
 		while (m_window.isOpen())
 		{
 			pollEvents();
-			update();
+			update(clock.restart());
 			render();
 		}
 	}
@@ -51,49 +54,55 @@ namespace lf
 		}
 	}
 
-	void Game::update()
+	void Game::update(sf::Time dt)
 	{
 		// Check for intersection with the cells
 		updateCell(static_cast<sf::Vector2f>(sf::Mouse::getPosition(m_window)));
-
+		
 		// Check the cells
-		// Note: This goes too fast at the moment!
-		for (int i = 0; i < CELLS_X; ++i)
+		m_updateTimer += dt;
+
+		if (m_updateTimer.asMilliseconds() > (1000.f / UPS))
 		{
-			for (int j = 0; j < CELLS_Y; ++j)
+			m_updateTimer = sf::Time::Zero;
+
+			for (int i = 0; i < CELLS_X; ++i)
 			{
-				auto count = getLivingNeighbors(sf::Vector2i(i, j));
-				bool result = false;
-
-				// Apply rules to the cell
-				if (m_cells[i][j].alive)
+				for (int j = 0; j < CELLS_Y; ++j)
 				{
-					if (count < 2)
-					{
-						result = false;
-					}
-					if (count == 2 || count == 3)
-					{
-						result = true;
-					}
-					if (count > 3)
-					{
-						result = false;
-					}
-				}
-				else
-				{
-					if (count == 3)
-					{
-						result = true;
-					}
-				}
+					auto count = getLivingNeighbors(sf::Vector2i(i, j));
+					bool result = false;
 
-				m_nextCellStates[i][j] = result;
+					// Apply rules to the cell
+					if (m_cells[i][j].alive)
+					{
+						if (count < 2)
+						{
+							result = false;
+						}
+						else if (count == 2 || count == 3)
+						{
+							result = true;
+						}
+						else if (count > 3)
+						{
+							result = false;
+						}
+					}
+					else
+					{
+						if (count == 3)
+						{
+							result = true;
+						}
+					}
+
+					m_nextCellStates[i][j] = result;
+				}
 			}
-		}
 
-		setNextState();
+			setNextState();
+		}	
 	}
 
 
@@ -136,47 +145,7 @@ namespace lf
 	{
 		uint count = 0;
 
-		// Check cell on the right.
-		if (index.x != CELLS_X - 1)
-			if (m_cells[index.x + 1][index.y].alive)
-				count++;
-
-		// Check cell on the bottom right.
-		if (index.x != CELLS_X - 1 && index.y != CELLS_Y - 1)
-			if (m_cells[index.x + 1][index.y + 1].alive)
-				count++;
-
-		// Check cell on the bottom.
-		if (index.y != CELLS_Y - 1)
-			if (m_cells[index.x][index.y + 1].alive)
-				count++;
-
-		// Check cell on the bottom left.
-		if (index.x != 0 && index.y != CELLS_Y - 1)
-			if (m_cells[index.x - 1][index.y + 1].alive)
-				count++;
-
-		// Check cell on the left.
-		if (index.x != 0)
-			if (m_cells[index.x - 1][index.y].alive)
-				count++;
-
-		// Check cell on the top left.
-		if (index.x != 0 && index.y != 0)
-			if (m_cells[index.x - 1][index.y - 1].alive)
-				count++;
-
-		// Check cell on the top.
-		if (index.y != 0)
-			if (m_cells[index.x][index.y - 1].alive)
-				count++;
-
-		// Check cell on the top right.
-		if (index.x != CELLS_X - 1 && index.y != 0)
-			if (m_cells[index.x + 1][index.y - 1].alive)
-				count++;
-
-		/*for (const auto& direction : m_directions)
+		for (const auto& direction : m_directions)
 		{
 			const auto neighborIndex = index + direction;
 
@@ -188,7 +157,7 @@ namespace lf
 				}
 			}
 		}
-*/
+
 		return count;
 	}
 
@@ -227,7 +196,7 @@ namespace lf
 		auto size = static_cast<uint>(std::round(m_window.getSize().y / CELL_SIZE) * multiple);
 		auto remainder = size % multiple;
 
-		// Make sure the grid expands the whole window
+		// Allow the grid to expand the whole window
 		(remainder != 0) ? m_verticalLines.resize(size + (multiple * multiple) - remainder) : m_verticalLines.resize(size + multiple);
 
 		float tileSize = 0.f;
@@ -242,7 +211,7 @@ namespace lf
 		size = static_cast<uint>(std::round(m_window.getSize().x / CELL_SIZE)) * multiple;
 		remainder = size % multiple;
 
-		// Make sure the grid expands the whole scene window
+		// Allow the grid to expand the whole window
 		(remainder != 0) ? m_horizontalLines.resize(size + (multiple * multiple) - remainder) : m_horizontalLines.resize(size + multiple);
 
 		for (uint i = 0; i < m_horizontalLines.size(); i += 2, tileSize += CELL_SIZE)

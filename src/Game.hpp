@@ -6,6 +6,7 @@
 #define CELLS_X 100
 #define CELLS_Y 50
 #define CELL_SIZE 10.f
+#define UPS 15
 
 namespace lf
 {
@@ -35,7 +36,7 @@ namespace lf
 		void createGrid();
 		void render();
 		void pollEvents();
-		void update();
+		void update(sf::Time dt);
 		void updateCell(const sf::Vector2f& point);
 		void setNextState();
 		uint getLivingNeighbors(const sf::Vector2i& index) const;
@@ -47,5 +48,6 @@ namespace lf
 		std::vector<std::vector<bool>> m_nextCellStates;
 		std::vector<sf::Vertex> m_verticalLines;
 		std::vector<sf::Vertex> m_horizontalLines;
+		sf::Time m_updateTimer;
 	};
 }
